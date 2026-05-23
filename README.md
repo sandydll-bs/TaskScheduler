@@ -1,6 +1,8 @@
 # TaskScheduler
 Script per detectare un task scheduler.
 
+[!] Se ci sono BUG scrivetemi su discord: @imsandy.dll
+
 # Comando per eseguire lo script:
 CMD (admin):
 ```
