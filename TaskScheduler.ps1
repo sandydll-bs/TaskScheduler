@@ -2,11 +2,22 @@ Write-Host "Task Scheduler | DS: @imsandy.dll" -ForegroundColor Magenta
 Write-Host ""
 
 $flagW = @(
-    "CMD","cmd","Powershell","Powershell_ISE",
-    "TaskScheduler","Task_Scheduler",
-    "cheat","clicker","autoclicker",
-    "auto","ez","bypass","sstest",
-    "suck","scheduler","tonynoh"
+    "update","updater","service","servicehost","host","runtime",
+    "system","sys","windows","win","security","defender","check","scan",
+    "auto","autostart","autorun","scheduler","task","job",
+    "clicker","autoclicker","macro","bot","script","runner",
+    "bypass","hack","cheat","inject","injector","loader","crack","patch",
+    "sstest","test","debug","dev","trial","temp","tmp",
+    "powershell","cmd","cmd.exe","pwsh","powershell_ise",
+    "mshta","wscript","cscript","rundll32","regsvr32",
+    "certutil","bitsadmin","wmic","msbuild","installutil",
+    "schtasks","taskeng","taskhost","taskschd",
+    "encoded","base64","hidden","bypassuac","amsi","obf","obfusc",
+    "loader","dropper","stealer","miner","rat","trojan","backdoor",
+    "inject","payload","beacon","c2","command","control",
+    "tonynoh","test123","aaa","zzz","tempjob","updatejob","sysjob",
+    "random","default","serviceupdate","windowsupdatex",
+    "cheatengine","engine","trainer","speedhack","wallhack","aimbot"
 )
 Write-Host -ForegroundColor Magenta "Analisi Scheduled Tasks..."
 Start-Sleep -Seconds 3
