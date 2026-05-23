@@ -1,4 +1,4 @@
-Write-Host "Task Scheduler | DS: @imsandy.dll"
+Write-Host "Task Scheduler | DS: @imsandy.dll" -ForegroundColor Magenta
 Write-Host ""
 
 $flagW = @(
@@ -31,15 +31,17 @@ foreach ($t in $tasks) {
 }
 Write-Host ""
 Write-Host "RIEPILOGO TASK (FLAGGED)" -ForegroundColor Magenta
+$flaggedTasks = $tasks | Where-Object {
+    $flagW | Where-Object {
+        $_ -and $_ -ne "" -and $t.TaskName -match [regex]::Escape($_)
+    }
+}
 foreach ($t in $tasks) {
     $isFlagged = $flagW | Where-Object {
         $t.TaskName -match [regex]::Escape($_)
     }
     if ($isFlagged) {
         Write-Host "[!] $($t.TaskName)" -ForegroundColor Red
-    }
-    else {
-        Write-Host $t.TaskName
     }
 }
 Write-Host ""
