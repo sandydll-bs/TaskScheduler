@@ -1,20 +1,31 @@
 Write-Host "Task Scheduler | DS: @imsandy.dll" -ForegroundColor Magenta
 Write-Host ""
-
-$flagW = @( "CMD","cmd","Powershell","Powershell_ISE", "TaskScheduler","Task_Scheduler", "cheat","clicker","autoclicker", "auto","ez","bypass","sstest", "suck","scheduler","tonynoh" )
-Write-Host -ForegroundColor Magenta "Analisi Scheduled Tasks..."
+$flagW = @(
+    "CMD","cmd","Powershell","Powershell_ISE",
+    "TaskScheduler","Task_Scheduler",
+    "cheat","clicker","autoclicker",
+    "auto","ez","bypass","sstest",
+    "suck","scheduler","tonynoh"
+)
+Write-Host "Analisi Scheduled Tasks..." -ForegroundColor Magenta
 Start-Sleep -Seconds 3
 function Resolve-PathEnv($path) {
-    return [Environment]::ExpandEnvironmentVariables($path)
+    [Environment]::ExpandEnvironmentVariables($path)
 }
 function Clean-Args($args) {
-    if ([string]::IsNullOrWhiteSpace($args)) { return "" }
-    return ($args -replace "\$\([^)]*\)", "").Trim()
+    if ([string]::IsNullOrWhiteSpace($args)) {
+        return ""
+    }
+    ($args -replace "\$\([^)]*\)", "").Trim()
 }
-$tasks = Get-ScheduledTask | Select-Object TaskName, TaskPath, Actions
+$tasks = Get-ScheduledTask | Select-Object TaskName,TaskPath,Actions
 foreach ($t in $tasks) {
-    $isFlagged = $flagW | Where-Object {
-        $t.TaskName -match [regex]::Escape($_)
+    $isFlagged = $false
+    foreach ($w in $flagW) {
+        if ($t.TaskName -match [regex]::Escape($w)) {
+            $isFlagged = $true
+            break
+        }
     }
     if ($isFlagged) {
         Write-Host "[!] $($t.TaskName)" -ForegroundColor Red
@@ -24,30 +35,34 @@ foreach ($t in $tasks) {
     }
 }
 Write-Host ""
-Write-Host "RIEPILOGO TASK (FLAGGED)" -ForegroundColor Magenta
-$flaggedTasks = $tasks | Where-Object {
-    $flagW | Where-Object {
-        $_ -and $_ -ne "" -and $t.TaskName -match [regex]::Escape($_)
-    }
-}
-foreach ($t in $tasks) {
-    $isFlagged = $flagW | Where-Object {
-        $t.TaskName -match [regex]::Escape($_)
-    }
-    if ($isFlagged) {
-        Write-Host "[!] $($t.TaskName)" -ForegroundColor Red
-    }
-}
-Write-Host ""
 Write-Host "RIEPILOGO TASK CREATE DALL'UTENTE" -ForegroundColor Yellow
-$currentUser = "$env:COMPUTERNAME\$env:USERNAME"
-$userTasks = Get-ScheduledTask | Where-Object {
-    $_.Principal.UserId -match [regex]::Escape($currentUser)
+$currentUser = $env:USERNAME.ToLower()
+$userTasks = @()
+foreach ($t in (Get-ScheduledTask)) {
+    try {
+        $xml = [xml](Export-ScheduledTask -TaskName $t.TaskName -TaskPath $t.TaskPath)
+        $author = $xml.Task.RegistrationInfo.Author
+        if ($author) {
+            $authorLower = $author.ToLower()
+            if (
+                $authorLower -match [regex]::Escape($currentUser)
+            ) {
+                $userTasks += [PSCustomObject]@{
+                    Task   = $t
+                    Author = $author
+                }
+            }
+        }
+    }
+    catch {
+
+    }
 }
-if ($userTasks) {
+if ($userTasks.Count -gt 0) {
     foreach ($u in $userTasks) {
-        Write-Host "[USER] $($u.TaskName)" -ForegroundColor Yellow
-        foreach ($a in $u.Actions) {
+        Write-Host "[USER] $($u.Task.TaskName)" -ForegroundColor Yellow
+        Write-Host "   AUTHOR: $($u.Author)" -ForegroundColor DarkYellow
+        foreach ($a in $u.Task.Actions) {
             $uexe  = Resolve-PathEnv $a.Execute
             $uargs = Clean-Args $a.Arguments
             Write-Host "   -> $uexe $uargs" -ForegroundColor DarkYellow
@@ -58,8 +73,24 @@ else {
     Write-Host "Nessuna task utente trovata" -ForegroundColor DarkGray
 }
 Write-Host ""
+Write-Host "RIEPILOGO TASK (FLAGGED)" -ForegroundColor Magenta
+foreach ($t in $tasks) {
+    $isFlagged = $false
+    foreach ($w in $flagW) {
+        if ($t.TaskName -match [regex]::Escape($w)) {
+            $isFlagged = $true
+            break
+        }
+    }
+    if ($isFlagged) {
+        Write-Host "[!] $($t.TaskName)" -ForegroundColor Red
+    }
+}
+Write-Host ""
 $taskName = Read-Host "Inserisci il nome esatto della task"
-$task = Get-ScheduledTask | Where-Object { $_.TaskName -eq $taskName }
+$task = Get-ScheduledTask | Where-Object {
+    $_.TaskName -eq $taskName
+}
 if (-not $task) {
     Write-Host "Task non trovata" -ForegroundColor Red
     return
@@ -71,7 +102,12 @@ foreach ($a in $task.Actions) {
     $args = Clean-Args $a.Arguments
     Write-Host "DEBUG: $exe $args" -ForegroundColor Cyan
     if ($exe -match "\.jar$" -or $args -match "\.jar") {
-        $jar = if ($exe -match "\.jar$") { $exe } else { ($args -split "\s+")[0] }
+        $jar = if ($exe -match "\.jar$") {
+            $exe
+        }
+        else {
+            ($args -split "\s+")[0]
+        }
         $jar = $jar.Trim('"')
         if (Test-Path $jar) {
             Write-Host "Eseguo JAR: $jar" -ForegroundColor Yellow
@@ -88,6 +124,7 @@ foreach ($a in $task.Actions) {
             continue
         }
         if ([string]::IsNullOrWhiteSpace($args)) {
+
             Start-Process $exe
         }
         else {
