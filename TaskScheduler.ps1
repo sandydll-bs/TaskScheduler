@@ -39,6 +39,25 @@ foreach ($t in $tasks) {
     }
 }
 Write-Host ""
+Write-Host "RIEPILOGO TASK CREATE DALL'UTENTE" -ForegroundColor Yellow
+$currentUser = "$env:COMPUTERNAME\$env:USERNAME"
+$userTasks = Get-ScheduledTask | Where-Object {
+    $_.Principal.UserId -match [regex]::Escape($currentUser)
+}
+if ($userTasks) {
+    foreach ($u in $userTasks) {
+        Write-Host "[USER] $($u.TaskName)" -ForegroundColor Yellow
+        foreach ($a in $u.Actions) {
+            $uexe  = Resolve-PathEnv $a.Execute
+            $uargs = Clean-Args $a.Arguments
+            Write-Host "   -> $uexe $uargs" -ForegroundColor DarkYellow
+        }
+    }
+}
+else {
+    Write-Host "Nessuna task utente trovata" -ForegroundColor DarkGray
+}
+Write-Host ""
 $taskName = Read-Host "Inserisci il nome esatto della task"
 $task = Get-ScheduledTask | Where-Object { $_.TaskName -eq $taskName }
 if (-not $task) {
